@@ -1,4 +1,29 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { signInWithGoogle, signInAnonymous } from '@/lib/firebase';
+
 export default function LoginPage() {
+  const router = useRouter();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+      router.push('/socials');
+    } catch (error) {
+      console.error('Google sign in failed:', error);
+    }
+  };
+
+  const handleAnonymousSignIn = async () => {
+    try {
+      await signInAnonymous();
+      router.push('/socials');
+    } catch (error) {
+      console.error('Anonymous sign in failed:', error);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
       <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">
@@ -6,7 +31,10 @@ export default function LoginPage() {
       </h1>
 
       <div className="w-full max-w-md space-y-4">
-        <button className="w-full bg-white text-black font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-100 transition-colors">
+        <button 
+          onClick={handleGoogleSignIn}
+          className="w-full bg-white text-black font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-100 transition-colors"
+        >
           <svg className="w-6 h-6" viewBox="0 0 24 24">
             <path
               fill="currentColor"
@@ -28,7 +56,10 @@ export default function LoginPage() {
           <span>Google ile Giriş Yap</span>
         </button>
 
-        <button className="w-full bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center hover:bg-gray-600 transition-colors">
+        <button 
+          onClick={handleAnonymousSignIn}
+          className="w-full bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center hover:bg-gray-600 transition-colors"
+        >
           Anonim Olarak Devam Et
         </button>
       </div>
