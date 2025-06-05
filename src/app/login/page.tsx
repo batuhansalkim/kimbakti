@@ -2,14 +2,23 @@
 
 import { useRouter } from 'next/navigation';
 import { signInWithGoogle, signInAnonymous } from '@/lib/firebase';
+import { useAuth } from '@/lib/AuthContext';
+import { useEffect } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  // Kullanıcı oturum açtığında otomatik yönlendirme
+  useEffect(() => {
+    if (user) {
+      router.push('/socials');
+    }
+  }, [user, router]);
 
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();
-      router.push('/socials');
     } catch (error) {
       console.error('Google sign in failed:', error);
     }
@@ -18,7 +27,6 @@ export default function LoginPage() {
   const handleAnonymousSignIn = async () => {
     try {
       await signInAnonymous();
-      router.push('/socials');
     } catch (error) {
       console.error('Anonymous sign in failed:', error);
     }
