@@ -2,29 +2,57 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const authCookie = request.cookies.get('__session')
+  const { pathname } = request.nextUrl
+  console.log('Middleware running for path:', pathname)
+
+  // Public routes that don't require authentication
+  const publicRoutes = ['/', '/login', '/privacy', '/terms', '/support']
+  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))
   
-  // Korunacak rotalar
-  const protectedPaths = ['/socials', '/report', '/premium']
-  const isProtectedPath = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
+  // Protected routes that require authentication
+  const protectedRoutes = ['/socials', '/report', '/premium']
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
-  // Public rotalar
-  const publicPaths = ['/', '/login', '/u']
-  const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
-
-  // Kullanıcı giriş yapmamış ve korumalı sayfaya erişmeye çalışıyorsa
-  if (!authCookie && isProtectedPath) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // API ve statik dosyaları atla
+  if (
+    pathname.startsWith('/_next') || 
+    pathname.startsWith('/api') ||
+    pathname.includes('.') ||
+    pathname.includes('favicon')
+  ) {
+    return NextResponse.next()
   }
 
-  // Kullanıcı giriş yapmış ve login sayfasına gitmeye çalışıyorsa
-  if (authCookie && request.nextUrl.pathname === '/login') {
-    return NextResponse.redirect(new URL('/socials', request.url))
+  // Session kontrolü
+  const session = request.cookies.get('__session')?.value
+  console.log('Session status:', session ? 'exists' : 'no session')
+
+  // Public route - allow access
+  if (isPublicRoute) {
+    return NextResponse.next()
   }
 
+  // Protected route - check auth
+  if (isProtectedRoute) {
+    if (!session) {
+      console.log('Protected route accessed without session, redirecting to login')
+      const loginUrl = new URL('/login', request.url)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
+
+  // Allow access to all other routes
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 } 
