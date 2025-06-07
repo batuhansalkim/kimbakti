@@ -346,4 +346,5 @@ export const trackUserActivity = {
   }
 };
 
-export { auth, app, db, checkConnection }; 
+// Analytics'i export et
+export { auth, app, db, checkConnection, analytics }; 

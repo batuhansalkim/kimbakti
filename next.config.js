@@ -3,7 +3,9 @@ const nextConfig = {
   reactStrictMode: false,
   experimental: {
     // RSC optimizasyonları
-    serverActions: false,
+    serverActions: {
+      allowedOrigins: ['localhost:3000']
+    },
     optimizeCss: true,
   },
   // Performans optimizasyonları
