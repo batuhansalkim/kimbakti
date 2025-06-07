@@ -62,7 +62,7 @@ export const generateStalkerNotification = (): string => {
   const action = actions[Math.floor(Math.random() * actions.length)];
   const timeAgo = Math.floor(Math.random() * 5) + 1;
 
-  return `${name} az önce ${action}`;
+  return `${name} ${timeAgo} dakika önce ${action}`;
 };
 
 export const generateStalkReport = (instagram?: string, tiktok?: string): Stalker[] => {

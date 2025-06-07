@@ -9,9 +9,10 @@ import {
   browserLocalPersistence,
   onAuthStateChanged,
   inMemoryPersistence,
-  signInWithPopup
+  signInWithPopup,
+  User
 } from 'firebase/auth';
-import { getAnalytics, logEvent } from 'firebase/analytics';
+import { getAnalytics, logEvent, Analytics } from 'firebase/analytics';
 import { 
   getFirestore, 
   doc, 
@@ -19,7 +20,8 @@ import {
   getDoc,
   enableIndexedDbPersistence,
   Firestore,
-  PersistenceSettings
+  PersistenceSettings,
+  DocumentData
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -144,22 +146,38 @@ const auth = getAuth(app);
 const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 const googleProvider = new GoogleAuthProvider();
 
-export const signInWithGoogle = async () => {
+interface SocialMediaData {
+  instagram?: string;
+  updatedAt?: string;
+}
+
+interface UserData {
+  email?: string;
+  isAnonymous?: boolean;
+  lastLogin?: string;
+  provider?: string;
+  socialMedia?: SocialMediaData;
+}
+
+interface FirebaseError extends Error {
+  code?: string;
+}
+
+export const signInWithGoogle = async (): Promise<User> => {
   try {
     console.log('Starting Google sign in...');
     
-    // Development ortamında popup, production'da redirect kullan
     if (process.env.NODE_ENV === 'development') {
       const result = await signInWithPopup(auth, googleProvider);
       console.log('Google sign in successful (popup):', result.user.email);
       return result.user;
     } else {
       await signInWithRedirect(auth, googleProvider);
+      return null as any; // This line never actually returns as redirect happens
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Google sign in error:', error);
-    // Daha açıklayıcı hata mesajları
-    if (error.code === 'auth/unauthorized-domain') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'auth/unauthorized-domain') {
       throw new Error('Bu domain üzerinden giriş yapılamıyor. Lütfen yetkili bir domain kullanın.');
     }
     throw error;
@@ -226,49 +244,47 @@ export const handleRedirectResult = async () => {
 };
 
 // Sosyal medya bilgilerini kaydetme
-export const saveSocialMediaInfo = async (userId: string, data: { instagram?: string }) => {
+export const saveSocialMediaInfo = async (userId: string, data: SocialMediaData): Promise<boolean> => {
   try {
     console.log('Saving Instagram info for user:', userId);
     
-    // Kullanıcı kontrolü
     if (!auth.currentUser) {
       throw new Error('Oturum açmanız gerekiyor.');
     }
 
-    // Bağlantı durumunu kontrol et
     if (!navigator.onLine) {
       throw new Error('İnternet bağlantınız yok. Çevrimiçi olduğunuzda tekrar deneyin.');
     }
 
-    // Firestore bağlantısını kontrol et
     const userRef = doc(db, 'users', userId);
     
-    // Veriyi kaydet
     await setDoc(userRef, {
       instagram: data.instagram || '',
       updatedAt: new Date().toISOString()
-    }, { merge: true }); // merge: true sayesinde diğer verileri koruyoruz
+    }, { merge: true });
 
     console.log('Instagram info saved successfully');
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error saving Instagram info:', error);
-    // Firebase hatalarını daha anlaşılır hale getir
-    if (error.code === 'permission-denied') {
-      throw new Error('Veri kaydetme izniniz yok. Lütfen tekrar giriş yapın.');
-    } else if (error.code === 'unavailable') {
-      throw new Error('Firebase servisine şu anda ulaşılamıyor. Lütfen daha sonra tekrar deneyin.');
-    } else if (error.code === 'not-found') {
-      throw new Error('Kullanıcı bilgileri bulunamadı.');
+    if (error && typeof error === 'object' && 'code' in error) {
+      const fbError = error as FirebaseError;
+      if (fbError.code === 'permission-denied') {
+        throw new Error('Veri kaydetme izniniz yok. Lütfen tekrar giriş yapın.');
+      } else if (fbError.code === 'unavailable') {
+        throw new Error('Firebase servisine şu anda ulaşılamıyor. Lütfen daha sonra tekrar deneyin.');
+      } else if (fbError.code === 'not-found') {
+        throw new Error('Kullanıcı bilgileri bulunamadı.');
+      }
     }
     throw error;
   }
 };
 
 // Sosyal medya bilgilerini getirme
-export const getSocialMediaInfo = async (userId: string) => {
+export const getSocialMediaInfo = async (userId: string): Promise<SocialMediaData | null> => {
   const maxRetries = 3;
-  let lastError = null;
+  let lastError: FirebaseError | null = null;
 
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -290,12 +306,14 @@ export const getSocialMediaInfo = async (userId: string) => {
       }
       
       return { instagram: '' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error getting social media info (attempt ${i + 1}):`, error);
-      lastError = error;
+      if (error && typeof error === 'object' && 'code' in error) {
+        lastError = error as FirebaseError;
 
-      if (!navigator.onLine || error.code === 'permission-denied') {
-        break;
+        if (!navigator.onLine || lastError.code === 'permission-denied') {
+          break;
+        }
       }
 
       if (i < maxRetries - 1) {
@@ -320,7 +338,7 @@ export const getSocialMediaInfo = async (userId: string) => {
 export const trackUserActivity = {
   pageView: (pageName: string) => {
     if (analytics) {
-      logEvent(analytics, 'page_view', {
+      logEvent(analytics as Analytics, 'page_view', {
         page_name: pageName,
         user_id: auth.currentUser?.uid
       });
@@ -329,7 +347,7 @@ export const trackUserActivity = {
   
   generateReport: (userId: string) => {
     if (analytics) {
-      logEvent(analytics, 'report_generated', {
+      logEvent(analytics as Analytics, 'report_generated', {
         userId,
         timestamp: new Date().toISOString()
       });
@@ -338,7 +356,7 @@ export const trackUserActivity = {
   
   premiumView: (userId: string) => {
     if (analytics) {
-      logEvent(analytics, 'premium_page_view', {
+      logEvent(analytics as Analytics, 'premium_page_view', {
         userId,
         timestamp: new Date().toISOString()
       });

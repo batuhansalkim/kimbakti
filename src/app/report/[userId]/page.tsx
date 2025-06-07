@@ -40,9 +40,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
   }, [user]);
 
   if (!user && !loading) {
-    if (typeof window !== 'undefined') {
-      router.push('/login');
-    }
+    window.location.href = '/login';
     return null;
   }
 
