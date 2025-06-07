@@ -113,8 +113,11 @@ if (typeof window !== 'undefined') {
       .then(() => console.log('Auth persistence set to local'))
       .catch((error) => console.error('Auth persistence error:', error));
 
-    // Analytics'i yapılandır
+    // Analytics'i yapılandır ve ilk event'i gönder
     const analytics = getAnalytics(app);
+    logEvent(analytics as Analytics, 'app_initialized', {
+      environment: process.env.NODE_ENV
+    });
 
     // Firestore'u yapılandır
     configureFirestore()
@@ -125,7 +128,6 @@ if (typeof window !== 'undefined') {
       })
       .catch(error => {
         console.error('Failed to initialize Firestore:', error);
-        // Kritik bir hata olduğunda kullanıcıyı bilgilendir
         if (typeof window !== 'undefined') {
           window.alert('Veritabanı bağlantısında bir sorun oluştu. Lütfen sayfayı yenileyip tekrar deneyin.');
         }
@@ -151,19 +153,11 @@ interface SocialMediaData {
   updatedAt?: string;
 }
 
-interface UserData {
-  email?: string;
-  isAnonymous?: boolean;
-  lastLogin?: string;
-  provider?: string;
-  socialMedia?: SocialMediaData;
-}
-
 interface FirebaseError extends Error {
   code?: string;
 }
 
-export const signInWithGoogle = async (): Promise<User> => {
+export const signInWithGoogle = async (): Promise<User | null> => {
   try {
     console.log('Starting Google sign in...');
     
@@ -173,7 +167,7 @@ export const signInWithGoogle = async (): Promise<User> => {
       return result.user;
     } else {
       await signInWithRedirect(auth, googleProvider);
-      return null as any; // This line never actually returns as redirect happens
+      return null; // This line never actually returns as redirect happens
     }
   } catch (error: unknown) {
     console.error('Google sign in error:', error);

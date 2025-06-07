@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User } from 'firebase/auth';
 import { auth } from './firebase';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 type AuthContextType = {
   user: User | null;
@@ -19,7 +19,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
   const redirectAttempts = useRef(0);
 
@@ -44,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           window.location.href = '/login';
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error during redirect:', error);
     } finally {
       setIsRedirecting(false);
