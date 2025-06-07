@@ -16,10 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="tr" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+    <html lang="tr" className="dark" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen bg-gradient-to-b from-gray-900 to-black text-white`} suppressHydrationWarning>
         <AuthProvider>
-          {children}
+          <div className="page-transition">
+            {children}
+          </div>
         </AuthProvider>
       </body>
     </html>

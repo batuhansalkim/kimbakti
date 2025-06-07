@@ -1,4 +1,4 @@
-import { initializeApp, getApps } from 'firebase/app';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { 
   getAuth, 
   GoogleAuthProvider, 
@@ -18,7 +18,8 @@ import {
   setDoc, 
   getDoc,
   enableIndexedDbPersistence,
-  Firestore
+  Firestore,
+  PersistenceSettings
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -31,46 +32,117 @@ const firebaseConfig = {
   measurementId: "G-5PX3HCHB98"
 };
 
-// Initialize Firebase
-let app;
-let db: Firestore;
+// Firebase yapılandırmasını bir kez başlat
+const initializeFirebase = () => {
+  if (!getApps().length) {
+    return initializeApp(firebaseConfig);
+  } else {
+    return getApps()[0];
+  }
+};
 
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
+// Initialize Firebase
+let app: FirebaseApp = initializeFirebase();
+let db: Firestore;
+let checkConnection: () => Promise<boolean>;
+
+// Firestore'u yapılandır
+const configureFirestore = async () => {
+  if (!app) {
+    app = initializeFirebase();
+  }
+
+  try {
+    // Firestore'u başlat
+    db = getFirestore(app);
+
+    // Persistence'ı etkinleştirmeyi dene
+    try {
+      await enableIndexedDbPersistence(db);
+      console.log('Firestore offline persistence enabled');
+    } catch (err: any) {
+      if (err.code === 'failed-precondition') {
+        console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+      } else if (err.code === 'unimplemented') {
+        console.warn('The current browser does not support persistence.');
+      } else if (err.message?.includes('already been started')) {
+        console.warn('Persistence already enabled');
+      } else {
+        console.error('Firestore persistence error:', err);
+      }
+    }
+
+    return db;
+  } catch (error) {
+    console.error('Error configuring Firestore:', error);
+    throw error;
+  }
+};
+
+// Bağlantı kontrolü
+const createConnectionChecker = (database: Firestore) => {
+  return async () => {
+    if (!navigator.onLine) {
+      console.log('Device is offline, skipping connection check');
+      return false;
+    }
+
+    try {
+      const testDoc = doc(database, '_connection_test', 'test');
+      await getDoc(testDoc);
+      console.log('Firestore connection successful');
+      return true;
+    } catch (error) {
+      console.warn('Firestore connection failed:', error);
+      return false;
+    }
+  };
+};
+
+// Firebase'i başlat
+if (typeof window !== 'undefined') {
+  try {
+    // Firebase'i başlat
+    app = initializeFirebase();
+    
+    // Auth'u yapılandır
+    const auth = getAuth(app);
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => console.log('Auth persistence set to local'))
+      .catch((error) => console.error('Auth persistence error:', error));
+
+    // Analytics'i yapılandır
+    const analytics = getAnalytics(app);
+
+    // Firestore'u yapılandır
+    configureFirestore()
+      .then(database => {
+        db = database;
+        checkConnection = createConnectionChecker(database);
+        return checkConnection();
+      })
+      .catch(error => {
+        console.error('Failed to initialize Firestore:', error);
+        // Kritik bir hata olduğunda kullanıcıyı bilgilendir
+        if (typeof window !== 'undefined') {
+          window.alert('Veritabanı bağlantısında bir sorun oluştu. Lütfen sayfayı yenileyip tekrar deneyin.');
+        }
+      });
+  } catch (error) {
+    console.error('Critical Firebase initialization error:', error);
+    if (typeof window !== 'undefined') {
+      window.alert('Uygulama başlatılırken bir hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.');
+    }
+  }
 } else {
-  app = getApps()[0];
+  app = initializeFirebase();
+  db = getFirestore(app);
+  checkConnection = async () => false;
 }
 
 const auth = getAuth(app);
 const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 const googleProvider = new GoogleAuthProvider();
-
-// Firestore'u başlat ve offline persistence'ı etkinleştir
-if (typeof window !== 'undefined') {
-  db = getFirestore(app);
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-    } else if (err.code === 'unimplemented') {
-      console.warn('The current browser does not support persistence.');
-    } else {
-      console.error('Firestore persistence error:', err);
-    }
-  });
-} else {
-  db = getFirestore(app);
-}
-
-// Auth persistence'ı ayarla
-if (typeof window !== 'undefined') {
-  setPersistence(auth, browserLocalPersistence)
-    .then(() => {
-      console.log('Auth persistence set to local');
-    })
-    .catch((error) => {
-      console.error('Auth persistence error:', error);
-    });
-}
 
 export const signInWithGoogle = async () => {
   try {
@@ -154,71 +226,94 @@ export const handleRedirectResult = async () => {
 };
 
 // Sosyal medya bilgilerini kaydetme
-export const saveSocialMediaInfo = async (userId: string, data: { instagram?: string; tiktok?: string }) => {
+export const saveSocialMediaInfo = async (userId: string, data: { instagram?: string }) => {
   try {
-    console.log('Saving social media info for user:', userId);
-    const userRef = doc(db, 'users', userId);
+    console.log('Saving Instagram info for user:', userId);
     
-    // Önce mevcut veriyi kontrol et
-    const docSnap = await getDoc(userRef);
-    const existingData = docSnap.exists() ? docSnap.data() : {};
-
-    // Yeni veriyi kaydet
-    await setDoc(userRef, {
-      ...existingData,
-      socialMedia: {
-        instagram: data.instagram || '',
-        tiktok: data.tiktok || '',
-        updatedAt: new Date().toISOString()
-      }
-    }, { 
-      merge: true 
-    });
-
-    console.log('Social media info saved successfully');
-    
-    if (analytics) {
-      logEvent(analytics, 'social_media_update', {
-        userId,
-        hasInstagram: !!data.instagram,
-        hasTiktok: !!data.tiktok
-      });
+    // Kullanıcı kontrolü
+    if (!auth.currentUser) {
+      throw new Error('Oturum açmanız gerekiyor.');
     }
 
+    // Bağlantı durumunu kontrol et
+    if (!navigator.onLine) {
+      throw new Error('İnternet bağlantınız yok. Çevrimiçi olduğunuzda tekrar deneyin.');
+    }
+
+    // Firestore bağlantısını kontrol et
+    const userRef = doc(db, 'users', userId);
+    
+    // Veriyi kaydet
+    await setDoc(userRef, {
+      instagram: data.instagram || '',
+      updatedAt: new Date().toISOString()
+    }, { merge: true }); // merge: true sayesinde diğer verileri koruyoruz
+
+    console.log('Instagram info saved successfully');
     return true;
   } catch (error: any) {
-    console.error('Error saving social media info:', error);
-    
-    // Daha spesifik hata mesajları
-    if (error.code === 'unavailable' || error.code === 'failed-precondition') {
-      throw new Error('İnternet bağlantınızı kontrol edin ve tekrar deneyin.');
-    } else if (error.code === 'permission-denied') {
-      throw new Error('Bu işlem için yetkiniz bulunmuyor.');
+    console.error('Error saving Instagram info:', error);
+    // Firebase hatalarını daha anlaşılır hale getir
+    if (error.code === 'permission-denied') {
+      throw new Error('Veri kaydetme izniniz yok. Lütfen tekrar giriş yapın.');
+    } else if (error.code === 'unavailable') {
+      throw new Error('Firebase servisine şu anda ulaşılamıyor. Lütfen daha sonra tekrar deneyin.');
     } else if (error.code === 'not-found') {
       throw new Error('Kullanıcı bilgileri bulunamadı.');
     }
-    
-    throw new Error('Sosyal medya bilgileri kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+    throw error;
   }
 };
 
 // Sosyal medya bilgilerini getirme
 export const getSocialMediaInfo = async (userId: string) => {
-  try {
-    console.log('Getting social media info for user:', userId);
-    const docRef = doc(db, 'users', userId);
-    const docSnap = await getDoc(docRef);
-    
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      return data.socialMedia || null;
+  const maxRetries = 3;
+  let lastError = null;
+
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      console.log(`Getting social media info for user: ${userId} (attempt ${i + 1}/${maxRetries})`);
+      
+      if (!navigator.onLine) {
+        throw new Error('İnternet bağlantınız yok. Çevrimiçi olduğunuzda tekrar deneyin.');
+      }
+
+      const docRef = doc(db, 'users', userId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        console.log('Successfully retrieved social media info:', data);
+        return {
+          instagram: data.instagram || ''
+        };
+      }
+      
+      return { instagram: '' };
+    } catch (error: any) {
+      console.error(`Error getting social media info (attempt ${i + 1}):`, error);
+      lastError = error;
+
+      if (!navigator.onLine || error.code === 'permission-denied') {
+        break;
+      }
+
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
     }
-    
-    return null;
-  } catch (error) {
-    console.error('Error getting social media info:', error);
-    throw new Error('Sosyal medya bilgileri alınırken bir hata oluştu. Lütfen tekrar deneyin.');
   }
+
+  if (lastError) {
+    if (!navigator.onLine) {
+      throw new Error('İnternet bağlantınızı kontrol edin ve tekrar deneyin.');
+    } else if (lastError.code === 'unavailable' || lastError.message?.includes('WebChannel')) {
+      throw new Error('Sunucu bağlantısında sorun oluştu. Lütfen tekrar deneyin.');
+    }
+  }
+
+  throw new Error('Sosyal medya bilgileri alınırken bir hata oluştu. Lütfen tekrar deneyin.');
 };
 
 // Kullanıcı aktivitelerini izleme
@@ -251,4 +346,4 @@ export const trackUserActivity = {
   }
 };
 
-export { auth, app, db }; 
+export { auth, app, db, checkConnection }; 

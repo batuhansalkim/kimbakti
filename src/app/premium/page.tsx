@@ -6,7 +6,7 @@ export default function PremiumPage() {
       </h1>
 
       <p className="text-gray-400 text-center mb-8 max-w-md">
-        Gizli profilleri gör, tam isimlerini öğren ve daha fazla detaya eriş!
+        Gizli Instagram profillerini gör, tam isimlerini öğren ve daha fazla detaya eriş!
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
@@ -19,7 +19,7 @@ export default function PremiumPage() {
               <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Tüm gizli profilleri gör
+              Gizli Instagram profillerini gör
             </li>
             <li className="flex items-center">
               <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,7 +45,7 @@ export default function PremiumPage() {
               <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Tüm gizli profilleri gör
+              Tüm gizli Instagram profillerini gör
             </li>
             <li className="flex items-center">
               <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +74,7 @@ export default function PremiumPage() {
               <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              1 gizli profili aç
+              1 gizli Instagram profilini aç
             </li>
             <li className="flex items-center">
               <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
