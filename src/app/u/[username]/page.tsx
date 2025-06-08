@@ -1,7 +1,14 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 
-export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
+type PageParams = {
+  params: {
+    username: string;
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   return {
     title: `${decodeURIComponent(params.username)} - Stalk Raporu`,
     description: 'Sen de kimler tarafından stalklandığını öğren!',
@@ -12,9 +19,9 @@ export async function generateStaticParams() {
   return [];
 }
 
-export default function SharePage({ params }: { params: { username: string } }) {
+export default async function SharePage({ params }: PageParams) {
   const { username } = params;
-
+  
   return (
     <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
       <div className="w-full max-w-md text-center space-y-8">
@@ -29,7 +36,7 @@ export default function SharePage({ params }: { params: { username: string } }) 
         </div>
 
         <div className="space-y-4">
-          <Link
+          <Link 
             href="/login"
             className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all duration-300 animate-pulse"
           >
