@@ -7,21 +7,17 @@ import {
   getRedirectResult,
   setPersistence,
   browserLocalPersistence,
-  onAuthStateChanged,
-  inMemoryPersistence,
   signInWithPopup,
   User
 } from 'firebase/auth';
-import { getAnalytics, logEvent, Analytics } from 'firebase/analytics';
+import { getAnalytics, logEvent } from 'firebase/analytics';
 import { 
   getFirestore, 
   doc, 
   setDoc, 
   getDoc,
   enableIndexedDbPersistence,
-  Firestore,
-  PersistenceSettings,
-  DocumentData
+  Firestore
 } from 'firebase/firestore';
 
 const firebaseConfig = {

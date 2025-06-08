@@ -1,14 +1,17 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import type { AppProps } from 'next/app';
-import { analytics } from '@/lib/firebase';
-import { logEvent } from 'firebase/analytics';
+import { app } from '@/lib/firebase';
+import { getAnalytics, logEvent } from 'firebase/analytics';
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   useEffect(() => {
-    if (analytics) {
+    // Analytics'i sadece production ortamında kullan
+    if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+      const analytics = getAnalytics(app);
+      
       const logPageView = () => {
         logEvent(analytics, 'page_view', {
           page_path: router.pathname,
