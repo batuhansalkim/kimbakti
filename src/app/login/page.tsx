@@ -1,12 +1,15 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { signInWithGoogle, signInAnonymous, auth } from '@/lib/firebase';
 import { useAuth } from '@/lib/AuthContext';
 import { useEffect, useState } from 'react';
 
+interface AuthError extends Error {
+  code?: string;
+  message: string;
+}
+
 export default function LoginPage() {
-  const router = useRouter();
   const { user, loading } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,9 +43,10 @@ export default function LoginPage() {
         console.log('Redirecting to socials after Google sign in');
         window.location.href = '/socials';
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Google sign in error:', error);
-      setError(error.message || 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
+      const authError = error as AuthError;
+      setError(authError.message || 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setIsProcessing(false);
     }
@@ -66,9 +70,10 @@ export default function LoginPage() {
         console.log('Redirecting to socials after anonymous sign in');
         window.location.href = '/socials';
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Anonymous sign in error:', error);
-      setError(error.message || 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
+      const authError = error as AuthError;
+      setError(authError.message || 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setIsProcessing(false);
     }
