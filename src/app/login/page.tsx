@@ -45,8 +45,12 @@ export default function LoginPage() {
       }
     } catch (error: unknown) {
       console.error('Google sign in error:', error);
-      const authError = error as AuthError;
-      setError(authError.message || 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
+      if (error instanceof Error) {
+        const authError = error as AuthError;
+        setError(authError.message || 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
+      } else {
+        setError('Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -72,8 +76,12 @@ export default function LoginPage() {
       }
     } catch (error: unknown) {
       console.error('Anonymous sign in error:', error);
-      const authError = error as AuthError;
-      setError(authError.message || 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
+      if (error instanceof Error) {
+        const authError = error as AuthError;
+        setError(authError.message || 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
+      } else {
+        setError('Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
+      }
     } finally {
       setIsProcessing(false);
     }
