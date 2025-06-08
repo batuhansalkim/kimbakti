@@ -1,9 +1,18 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/lib/AuthContext';
-import { Metadata } from 'next';
+import { Metadata, Viewport } from 'next';
+import ClientProviders from '@/components/ClientProviders';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+});
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: 'Seni Kim Stalklıyor?',
@@ -17,12 +26,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr" className="dark" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen bg-gradient-to-b from-gray-900 to-black text-white`} suppressHydrationWarning>
-        <AuthProvider>
+      <body 
+        className={`${inter.className} min-h-screen bg-gradient-to-b from-gray-900 to-black text-white antialiased`} 
+        suppressHydrationWarning
+      >
+        <ClientProviders>
           <div className="page-transition">
             {children}
           </div>
-        </AuthProvider>
+        </ClientProviders>
       </body>
     </html>
   );
