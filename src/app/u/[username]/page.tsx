@@ -1,25 +1,17 @@
 import Link from 'next/link';
-import type { Metadata } from 'next';
 
-type Props = {
+type PageProps = {
   params: { username: string };
-  searchParams: Record<string, string | string[] | undefined>;
 };
 
-export async function generateMetadata({
-  params,
-}: Props): Promise<Metadata> {
-  return {
-    title: `${decodeURIComponent(params.username)} - Stalk Raporu`,
-    description: 'Sen de kimler tarafından stalklandığını öğren!',
-  };
+async function getData(username: string) {
+  // Simüle edilmiş veri yükleme
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return { username };
 }
 
-export default async function SharePage({
-  params,
-}: Props) {
-  // Simüle edilmiş async işlem - Next.js'in async gereksinimini karşılamak için
-  await Promise.resolve();
+export default async function Page({ params }: PageProps) {
+  const data = await getData(params.username);
 
   return (
     <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
@@ -27,7 +19,7 @@ export default async function SharePage({
         <div className="space-y-4">
           <div className="w-24 h-24 mx-auto rounded-full bg-gray-700" />
           <h1 className="text-2xl md:text-3xl font-bold">
-            {decodeURIComponent(params.username)} az önce stalk raporunu aldı
+            {decodeURIComponent(data.username)} az önce stalk raporunu aldı
           </h1>
           <p className="text-xl text-gray-400">
             Sen de kimler tarafından stalklandığını merak ediyor musun?
