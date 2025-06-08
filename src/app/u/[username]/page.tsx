@@ -1,11 +1,10 @@
-interface PageProps {
-  params: {
-    username: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
-}
+import Link from 'next/link';
 
-export default function SharePage({ params }: PageProps) {
+export default async function SharePage({
+  params,
+}: {
+  params: { username: string };
+}) {
   return (
     <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
       <div className="w-full max-w-md text-center space-y-8">
@@ -20,9 +19,12 @@ export default function SharePage({ params }: PageProps) {
         </div>
 
         <div className="space-y-4">
-          <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all duration-300 animate-pulse">
+          <Link 
+            href="/login"
+            className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all duration-300 animate-pulse"
+          >
             Raporumu Al
-          </button>
+          </Link>
 
           <p className="text-sm text-gray-500">
             100.000+ kişi raporunu aldı
