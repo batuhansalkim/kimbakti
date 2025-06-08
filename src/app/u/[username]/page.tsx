@@ -1,4 +1,11 @@
-export default function SharePage({ params }: { params: { username: string } }) {
+interface PageProps {
+  params: {
+    username: string;
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default function SharePage({ params }: PageProps) {
   return (
     <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
       <div className="w-full max-w-md text-center space-y-8">
