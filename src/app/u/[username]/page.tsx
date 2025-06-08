@@ -1,8 +1,13 @@
 import Link from 'next/link';
 
-type PageProps = {
-  params: { username: string };
-};
+interface PageParams {
+  username: string;
+}
+
+interface Props {
+  params: PageParams;
+  searchParams: { [key: string]: string | string[] | undefined };
+}
 
 async function getData(username: string) {
   // Simüle edilmiş veri yükleme
@@ -10,7 +15,7 @@ async function getData(username: string) {
   return { username };
 }
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: Props) {
   const data = await getData(params.username);
 
   return (
