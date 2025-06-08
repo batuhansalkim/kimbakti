@@ -1,28 +1,25 @@
+'use client';
+
 import { Metadata } from 'next';
 import Link from 'next/link';
 
-type Props = {
-  params: { username: string }
-  searchParams: { [key: string]: string | string[] | undefined }
-}
+export const metadata: Metadata = {
+  title: 'Stalk Raporu',
+  description: 'Sen de kimler tarafından stalklandığını öğren!',
+};
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  return {
-    title: `${decodeURIComponent(params.username)} - Stalk Raporu`,
-    description: 'Sen de kimler tarafından stalklandığını öğren!',
-  };
-}
-
-const SharePage = async ({ params }: Props) => {
-  const { username } = params;
-  
+export default function SharePage({
+  params,
+}: {
+  params: { username: string };
+}) {
   return (
     <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
       <div className="w-full max-w-md text-center space-y-8">
         <div className="space-y-4">
           <div className="w-24 h-24 mx-auto rounded-full bg-gray-700" />
           <h1 className="text-2xl md:text-3xl font-bold">
-            {decodeURIComponent(username)} az önce stalk raporunu aldı
+            {decodeURIComponent(params.username)} az önce stalk raporunu aldı
           </h1>
           <p className="text-xl text-gray-400">
             Sen de kimler tarafından stalklandığını merak ediyor musun?
@@ -55,6 +52,4 @@ const SharePage = async ({ params }: Props) => {
       </div>
     </div>
   );
-};
-
-export default SharePage;
+}
