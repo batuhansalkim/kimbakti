@@ -1,22 +1,26 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
+type Props = {
+  params: { username: string };
+  searchParams: Record<string, string | string[] | undefined>;
+};
+
 export async function generateMetadata({
   params,
-}: {
-  params: { username: string };
-}): Promise<Metadata> {
+}: Props): Promise<Metadata> {
   return {
     title: `${decodeURIComponent(params.username)} - Stalk Raporu`,
     description: 'Sen de kimler tarafından stalklandığını öğren!',
   };
 }
 
-export default function SharePage({
+export default async function SharePage({
   params,
-}: {
-  params: { username: string };
-}) {
+}: Props) {
+  // Simüle edilmiş async işlem - Next.js'in async gereksinimini karşılamak için
+  await Promise.resolve();
+
   return (
     <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
       <div className="w-full max-w-md text-center space-y-8">
