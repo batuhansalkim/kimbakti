@@ -6,7 +6,7 @@ export default function PrivacyPage() {
         
         <div className="prose prose-invert">
           <p className="text-gray-300 mb-6">
-            Bu gizlilik politikası, "Seni Kim Stalklıyor?" uygulamasının kullanıcı verilerini nasıl topladığını ve kullandığını açıklar.
+            Bu gizlilik politikası, &quot;Seni Kim Stalklıyor?&quot; uygulamasının kullanıcı verilerini nasıl topladığını ve kullandığını açıklar.
           </p>
 
           <h2 className="text-xl font-semibold mt-8 mb-4">Toplanan Bilgiler</h2>

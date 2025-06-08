@@ -62,15 +62,18 @@ const configureFirestore = async () => {
     try {
       await enableIndexedDbPersistence(db);
       console.log('Firestore offline persistence enabled');
-    } catch (err: any) {
-      if (err.code === 'failed-precondition') {
-        console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-      } else if (err.code === 'unimplemented') {
-        console.warn('The current browser does not support persistence.');
-      } else if (err.message?.includes('already been started')) {
-        console.warn('Persistence already enabled');
-      } else {
-        console.error('Firestore persistence error:', err);
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'code' in error) {
+        const firestoreError = error as { code: string };
+        if (firestoreError.code === 'failed-precondition') {
+          console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+        } else if (firestoreError.code === 'unimplemented') {
+          console.warn('The current browser does not support persistence.');
+        } else if ('message' in error && typeof error.message === 'string' && error.message.includes('already been started')) {
+          console.warn('Persistence already enabled');
+        } else {
+          console.error('Firestore persistence error:', error);
+        }
       }
     }
 
@@ -114,10 +117,12 @@ if (typeof window !== 'undefined') {
       .catch((error) => console.error('Auth persistence error:', error));
 
     // Analytics'i yapılandır ve ilk event'i gönder
-    const analytics = getAnalytics(app);
-    logEvent(analytics as Analytics, 'app_initialized', {
-      environment: process.env.NODE_ENV
-    });
+    if (process.env.NODE_ENV === 'production') {
+      const analyticsInstance = getAnalytics(app);
+      logEvent(analyticsInstance, 'app_initialized', {
+        environment: process.env.NODE_ENV
+      });
+    }
 
     // Firestore'u yapılandır
     configureFirestore()
@@ -145,7 +150,6 @@ if (typeof window !== 'undefined') {
 }
 
 const auth = getAuth(app);
-const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 const googleProvider = new GoogleAuthProvider();
 
 interface SocialMediaData {
@@ -190,8 +194,9 @@ export const signInAnonymous = async () => {
       provider: 'anonymous'
     }, { merge: true });
 
-    if (analytics) {
-      logEvent(analytics, 'login', {
+    if (process.env.NODE_ENV === 'production') {
+      const analyticsInstance = getAnalytics(app);
+      logEvent(analyticsInstance, 'login', {
         method: 'anonymous',
         userId: result.user.uid
       });
@@ -219,8 +224,9 @@ export const handleRedirectResult = async () => {
         provider: 'google'
       }, { merge: true });
 
-      if (analytics) {
-        logEvent(analytics, 'login', {
+      if (process.env.NODE_ENV === 'production') {
+        const analyticsInstance = getAnalytics(app);
+        logEvent(analyticsInstance, 'login', {
           method: 'google',
           userId: result.user.uid,
           userEmail: result.user.email
@@ -331,8 +337,9 @@ export const getSocialMediaInfo = async (userId: string): Promise<SocialMediaDat
 // Kullanıcı aktivitelerini izleme
 export const trackUserActivity = {
   pageView: (pageName: string) => {
-    if (analytics) {
-      logEvent(analytics as Analytics, 'page_view', {
+    if (process.env.NODE_ENV === 'production') {
+      const analyticsInstance = getAnalytics(app);
+      logEvent(analyticsInstance, 'page_view', {
         page_name: pageName,
         user_id: auth.currentUser?.uid
       });
@@ -340,8 +347,9 @@ export const trackUserActivity = {
   },
   
   generateReport: (userId: string) => {
-    if (analytics) {
-      logEvent(analytics as Analytics, 'report_generated', {
+    if (process.env.NODE_ENV === 'production') {
+      const analyticsInstance = getAnalytics(app);
+      logEvent(analyticsInstance, 'report_generated', {
         userId,
         timestamp: new Date().toISOString()
       });
@@ -349,8 +357,9 @@ export const trackUserActivity = {
   },
   
   premiumView: (userId: string) => {
-    if (analytics) {
-      logEvent(analytics as Analytics, 'premium_page_view', {
+    if (process.env.NODE_ENV === 'production') {
+      const analyticsInstance = getAnalytics(app);
+      logEvent(analyticsInstance, 'premium_page_view', {
         userId,
         timestamp: new Date().toISOString()
       });
@@ -359,4 +368,4 @@ export const trackUserActivity = {
 };
 
 // Analytics'i export et
-export { auth, app, db, checkConnection, analytics }; 
+export { auth, app, db, checkConnection }; 

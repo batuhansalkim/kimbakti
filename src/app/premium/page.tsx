@@ -2,7 +2,7 @@ export default function PremiumPage() {
   return (
     <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
       <h1 className="text-3xl md:text-4xl font-bold text-center mb-4">
-        Premium'a Geç
+        Premium&apos;a Geç
       </h1>
 
       <p className="text-gray-400 text-center mb-8 max-w-md">
@@ -34,7 +34,7 @@ export default function PremiumPage() {
         </div>
 
         {/* 3 Günlük Premium */}
-        <div className="bg-purple-900/50 backdrop-blur-sm rounded-lg p-6 flex flex-col relative overflow-hidden">
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 flex flex-col relative">
           <div className="absolute top-0 right-0 bg-purple-500 text-white px-4 py-1 rounded-bl-lg text-sm">
             En Popüler
           </div>

@@ -67,8 +67,14 @@ export default function SocialsPage() {
 
       // Hemen yönlendirmeyi yap
       window.location.href = reportUrl;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error:', error);
+      
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+      }
       
       // Hata olsa bile report sayfasına yönlendir
       window.location.href = `/report/${user.uid}`;
