@@ -3,6 +3,7 @@
 import { signInWithGoogle, signInAnonymous, auth } from '@/lib/firebase';
 import { useAuth } from '@/lib/AuthContext';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface AuthError extends Error {
   code?: string;
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const { user, loading } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   // Debug için auth durumunu izle
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function LoginPage() {
         document.cookie = `__session=${idToken}; path=/; max-age=3600; secure`;
         
         console.log('Redirecting to socials after Google sign in');
-        window.location.href = '/socials';
+        router.push('/socials');
       }
     } catch (error: unknown) {
       console.error('Google sign in error:', error);
@@ -72,7 +74,7 @@ export default function LoginPage() {
         document.cookie = `__session=${idToken}; path=/; max-age=3600; secure`;
         
         console.log('Redirecting to socials after anonymous sign in');
-        window.location.href = '/socials';
+        router.push('/socials');
       }
     } catch (error: unknown) {
       console.error('Anonymous sign in error:', error);
@@ -91,9 +93,9 @@ export default function LoginPage() {
   useEffect(() => {
     if (user && !loading && !isProcessing) {
       console.log('User already logged in, redirecting to socials');
-      window.location.href = '/socials';
+      router.push('/socials');
     }
-  }, [user, loading, isProcessing]);
+  }, [user, loading, isProcessing, router]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
