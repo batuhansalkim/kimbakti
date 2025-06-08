@@ -1,12 +1,16 @@
-'use client';
-
-import { Metadata } from 'next';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Stalk Raporu',
-  description: 'Sen de kimler tarafından stalklandığını öğren!',
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: { username: string };
+}): Promise<Metadata> {
+  return {
+    title: `${decodeURIComponent(params.username)} - Stalk Raporu`,
+    description: 'Sen de kimler tarafından stalklandığını öğren!',
+  };
+}
 
 export default function SharePage({
   params,
