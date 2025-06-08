@@ -15,7 +15,9 @@ export default function ClientProviders({
   const pathname = usePathname();
 
   useEffect(() => {
-    trackUserActivity.pageView(pathname);
+    if (pathname) {
+      trackUserActivity.pageView(pathname);
+    }
   }, [pathname]);
 
   return (

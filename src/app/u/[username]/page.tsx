@@ -1,11 +1,5 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { ResolvingMetadata } from 'next';
-
-type Props = {
-  params: { username: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
 
 async function getData(username: string) {
   // Simüle edilmiş veri yükleme
@@ -13,18 +7,22 @@ async function getData(username: string) {
   return { username };
 }
 
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata({ 
+  params 
+}: { 
+  params: { username: string } 
+}): Promise<Metadata> {
   return {
     title: `${decodeURIComponent(params.username)} - Kim Baktı?`,
     description: `${decodeURIComponent(params.username)} az önce stalk raporunu aldı. Sen de kimler tarafından stalklandığını merak ediyor musun?`,
   };
 }
 
-export default async function Page(props: Props) {
-  const { params } = props;
+export default async function Page({ 
+  params 
+}: { 
+  params: { username: string } 
+}) {
   const data = await getData(params.username);
 
   return (
