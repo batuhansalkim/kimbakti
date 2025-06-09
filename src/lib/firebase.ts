@@ -7,7 +7,8 @@ import {
   signInWithPopup,
   setPersistence,
   browserLocalPersistence,
-  User
+  User,
+  getRedirectResult
 } from 'firebase/auth';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { 
@@ -72,6 +73,13 @@ export const signInWithGoogle = async (): Promise<User | null> => {
       console.log('Google sign in successful (popup):', result.user.email);
       return result.user;
     } else {
+      // Check if we have a redirect result first
+      const result = await getRedirectResult(auth);
+      if (result) {
+        console.log('Google sign in successful (redirect):', result.user.email);
+        return result.user;
+      }
+      // If no redirect result, start the redirect flow
       await signInWithRedirect(auth, googleProvider);
       return null;
     }
@@ -135,6 +143,33 @@ export const getSocialMediaInfo = async (userId: string): Promise<SocialMediaDat
   } catch (error) {
     console.error('Error getting social media info:', error);
     return null;
+  }
+};
+
+export const trackUserActivity = {
+  pageView: (pathname: string) => {
+    try {
+      if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+        const analytics = getAnalytics(app);
+        logEvent(analytics, 'page_view', {
+          page_path: pathname,
+          page_title: document.title,
+        });
+      }
+    } catch (error) {
+      console.error('Analytics tracking error:', error);
+    }
+  },
+  
+  event: (eventName: string, params?: Record<string, any>) => {
+    try {
+      if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+        const analytics = getAnalytics(app);
+        logEvent(analytics, eventName, params);
+      }
+    } catch (error) {
+      console.error('Analytics event tracking error:', error);
+    }
   }
 };
 

@@ -25,7 +25,13 @@ export default function LoginPage() {
       isProcessing,
       error
     });
-  }, [user, loading, isProcessing, error]);
+
+    // Eğer kullanıcı giriş yapmışsa ve yükleme tamamlandıysa
+    if (user && !loading && !isProcessing) {
+      console.log('User already logged in, redirecting to socials');
+      router.push('/socials');
+    }
+  }, [user, loading, isProcessing, router, error]);
 
   const handleGoogleSignIn = async () => {
     if (isProcessing) return;
@@ -44,6 +50,8 @@ export default function LoginPage() {
         
         console.log('Redirecting to socials after Google sign in');
         router.push('/socials');
+      } else {
+        console.log('Redirect flow started, waiting for completion...');
       }
     } catch (error: unknown) {
       console.error('Google sign in error:', error);
@@ -88,14 +96,6 @@ export default function LoginPage() {
       setIsProcessing(false);
     }
   };
-
-  // Eğer kullanıcı zaten giriş yapmışsa socials'a yönlendir
-  useEffect(() => {
-    if (user && !loading && !isProcessing) {
-      console.log('User already logged in, redirecting to socials');
-      router.push('/socials');
-    }
-  }, [user, loading, isProcessing, router]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
