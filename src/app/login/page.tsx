@@ -27,7 +27,7 @@ export default function LoginPage() {
     });
 
     // Eğer kullanıcı giriş yapmışsa ve yükleme tamamlandıysa
-    if (user && !loading && !isProcessing) {
+    if (user && !loading) {
       console.log('User already logged in, redirecting to socials');
       router.push('/socials');
     }
@@ -40,7 +40,9 @@ export default function LoginPage() {
       setError(null);
       setIsProcessing(true);
       console.log('Starting Google sign in process...');
+      
       const user = await signInWithGoogle();
+      console.log('Sign in result:', user);
       
       if (user) {
         console.log('Google sign in successful:', user.email);
@@ -49,7 +51,7 @@ export default function LoginPage() {
         document.cookie = `__session=${idToken}; path=/; max-age=3600; secure`;
         
         console.log('Redirecting to socials after Google sign in');
-        router.push('/socials');
+        window.location.href = '/socials';
       } else {
         console.log('Redirect flow started, waiting for completion...');
       }
@@ -82,7 +84,7 @@ export default function LoginPage() {
         document.cookie = `__session=${idToken}; path=/; max-age=3600; secure`;
         
         console.log('Redirecting to socials after anonymous sign in');
-        router.push('/socials');
+        window.location.href = '/socials';
       }
     } catch (error: unknown) {
       console.error('Anonymous sign in error:', error);

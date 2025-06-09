@@ -21,34 +21,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
+  // Auth state değişikliklerini izle
   useEffect(() => {
+    console.log('Setting up auth state listener');
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       console.log('Auth state changed:', user ? `User logged in: ${user.email}` : 'No user');
-      
       setUser(user);
       setLoading(false);
-
-      // Yönlendirme mantığı
-      if (!loading) {
-        if (user) {
-          // Kullanıcı giriş yapmışsa ve login sayfasındaysa
-          if (pathname === '/login') {
-            console.log('User is authenticated, redirecting to /socials');
-            router.push('/socials');
-          }
-        } else {
-          // Kullanıcı giriş yapmamışsa ve korumalı bir sayfadaysa
-          const protectedRoutes = ['/socials', '/report', '/premium'];
-          if (protectedRoutes.some(route => pathname?.startsWith(route))) {
-            console.log('User is not authenticated, redirecting to /login');
-            router.push('/login');
-          }
-        }
-      }
     });
 
     return () => unsubscribe();
-  }, [loading, pathname, router]);
+  }, []);
+
+  // Yönlendirme mantığı için ayrı bir useEffect
+  useEffect(() => {
+    console.log('Navigation effect running:', {
+      user: user?.email,
+      loading,
+      pathname
+    });
+
+    if (!loading) {
+      if (user) {
+        // Kullanıcı giriş yapmışsa ve login sayfasındaysa
+        if (pathname === '/login') {
+          console.log('User is authenticated, redirecting to /socials');
+          router.push('/socials');
+        }
+      } else {
+        // Kullanıcı giriş yapmamışsa ve korumalı bir sayfadaysa
+        const protectedRoutes = ['/socials', '/report', '/premium'];
+        if (protectedRoutes.some(route => pathname?.startsWith(route))) {
+          console.log('User is not authenticated, redirecting to /login');
+          router.push('/login');
+        }
+      }
+    }
+  }, [user, loading, pathname, router]);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
