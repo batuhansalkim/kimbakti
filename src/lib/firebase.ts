@@ -31,6 +31,8 @@ const firebaseConfig = {
 };
 
 export const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+
+// Analytics'i sadece client-side ve production'da başlat
 export const analytics = typeof window !== 'undefined' && process.env.NODE_ENV === 'production' 
   ? getAnalytics(app) 
   : null;
@@ -68,15 +70,15 @@ const initializeFirestore = async () => {
 Promise.all([initializeAuth(), initializeFirestore()])
   .then(() => {
     console.log('Firebase services initialized successfully');
+    
+    // Analytics event'ini sadece production'da ve analytics varsa gönder
+    if (process.env.NODE_ENV === 'production' && analytics) {
+      logEvent(analytics, 'app_initialized');
+    }
   })
   .catch((error) => {
     console.error('Error initializing Firebase services:', error);
   });
-
-// Log initialization in production
-if (analytics) {
-  logEvent(analytics, 'app_initialized');
-}
 
 const googleProvider = new GoogleAuthProvider();
 
