@@ -1,6 +1,6 @@
 'use client';
 
-import { signInWithGoogle, signInAnonymous, auth } from '@/lib/firebase';
+import { signInWithGoogle, signInAnonymous, auth, checkRedirectResult } from '@/lib/firebase';
 import { useAuth } from '@/lib/AuthContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -16,6 +16,29 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  // Redirect sonucunu kontrol et
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        console.log('Checking for redirect result...');
+        const redirectUser = await checkRedirectResult();
+        if (redirectUser) {
+          console.log('Found redirect result, user:', redirectUser.email);
+          const idToken = await redirectUser.getIdToken();
+          document.cookie = `__session=${idToken}; path=/; max-age=3600; secure`;
+          window.location.href = '/socials';
+        }
+      } catch (error) {
+        console.error('Error checking redirect result:', error);
+        setError('Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
+      }
+    };
+
+    if (!loading && !user) {
+      checkRedirect();
+    }
+  }, [loading, user]);
+
   // Debug için auth durumunu izle
   useEffect(() => {
     console.log('Login Page - Auth State:', {
@@ -26,12 +49,11 @@ export default function LoginPage() {
       error
     });
 
-    // Eğer kullanıcı giriş yapmışsa ve yükleme tamamlandıysa
     if (user && !loading) {
       console.log('User already logged in, redirecting to socials');
-      router.push('/socials');
+      window.location.href = '/socials';
     }
-  }, [user, loading, isProcessing, router, error]);
+  }, [user, loading, isProcessing, error]);
 
   const handleGoogleSignIn = async () => {
     if (isProcessing) return;
@@ -46,11 +68,8 @@ export default function LoginPage() {
       
       if (user) {
         console.log('Google sign in successful:', user.email);
-        // Session cookie'sini ayarla
         const idToken = await user.getIdToken();
         document.cookie = `__session=${idToken}; path=/; max-age=3600; secure`;
-        
-        console.log('Redirecting to socials after Google sign in');
         window.location.href = '/socials';
       } else {
         console.log('Redirect flow started, waiting for completion...');

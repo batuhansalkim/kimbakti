@@ -16,7 +16,8 @@ import {
   doc, 
   setDoc, 
   getDoc,
-  Firestore
+  Firestore,
+  enableIndexedDbPersistence
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -29,7 +30,11 @@ const firebaseConfig = {
   measurementId: "G-5PX3HCHB98"
 };
 
-let app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+export const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+export const analytics = typeof window !== 'undefined' && process.env.NODE_ENV === 'production' 
+  ? getAnalytics(app) 
+  : null;
+
 let db: Firestore;
 
 // Client-side Firebase initialization
@@ -40,14 +45,25 @@ if (typeof window !== 'undefined') {
     setPersistence(auth, browserLocalPersistence)
       .catch((error) => console.error('Auth persistence error:', error));
 
-    // Configure Analytics in production
-    if (process.env.NODE_ENV === 'production') {
-      const analytics = getAnalytics(app);
+    // Initialize Firestore
+    db = getFirestore(app);
+    
+    // Enable offline persistence
+    enableIndexedDbPersistence(db)
+      .catch((err) => {
+        if (err.code === 'failed-precondition') {
+          console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+        } else if (err.code === 'unimplemented') {
+          console.warn('The current browser does not support persistence.');
+        }
+      });
+
+    // Log initialization in production
+    if (analytics) {
       logEvent(analytics, 'app_initialized');
     }
 
-    // Initialize Firestore
-    db = getFirestore(app);
+    console.log('Firebase services initialized successfully');
   } catch (error) {
     console.error('Firebase initialization error:', error);
   }
@@ -59,6 +75,20 @@ if (typeof window !== 'undefined') {
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
+// Firestore bağlantı durumunu kontrol et
+const checkFirestoreConnection = async () => {
+  try {
+    // Test dokümanı oluştur
+    const testDoc = doc(db, '_connection_test', 'test');
+    await setDoc(testDoc, { timestamp: new Date().toISOString() });
+    console.log('Firestore connection successful');
+    return true;
+  } catch (error) {
+    console.error('Firestore connection error:', error);
+    return false;
+  }
+};
+
 interface SocialMediaData {
   instagram?: string;
   updatedAt?: string;
@@ -66,28 +96,44 @@ interface SocialMediaData {
 
 export const signInWithGoogle = async (): Promise<User | null> => {
   try {
-    console.log('Starting Google sign in...');
+    // Önce Firestore bağlantısını kontrol et
+    await checkFirestoreConnection();
     
-    if (process.env.NODE_ENV === 'development') {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log('Google sign in successful (popup):', result.user.email);
-      return result.user;
-    } else {
-      // Check if we have a redirect result first
-      const result = await getRedirectResult(auth);
-      if (result) {
-        console.log('Google sign in successful (redirect):', result.user.email);
-        return result.user;
-      }
-      // If no redirect result, start the redirect flow
-      await signInWithRedirect(auth, googleProvider);
-      return null;
-    }
+    console.log('Starting Google sign in...');
+    console.log('Current environment:', process.env.NODE_ENV);
+    
+    // Her zaman popup kullan
+    const result = await signInWithPopup(auth, googleProvider);
+    console.log('Google sign in successful:', result.user.email);
+    return result.user;
+
   } catch (error: unknown) {
     console.error('Google sign in error:', error);
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'auth/unauthorized-domain') {
-      throw new Error('Bu domain üzerinden giriş yapılamıyor. Lütfen yetkili bir domain kullanın.');
+    if (error && typeof error === 'object' && 'code' in error) {
+      console.error('Error code:', error.code);
+      if (error.code === 'auth/popup-blocked') {
+        console.log('Popup blocked, trying redirect...');
+        await signInWithRedirect(auth, googleProvider);
+        return null;
+      } else if (error.code === 'auth/unauthorized-domain') {
+        throw new Error('Bu domain üzerinden giriş yapılamıyor. Lütfen yetkili bir domain kullanın.');
+      }
     }
+    throw error;
+  }
+};
+
+// Redirect sonucunu kontrol eden yeni fonksiyon
+export const checkRedirectResult = async (): Promise<User | null> => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result) {
+      console.log('Redirect result successful:', result.user.email);
+      return result.user;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error checking redirect result:', error);
     throw error;
   }
 };
