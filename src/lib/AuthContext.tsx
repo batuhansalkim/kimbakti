@@ -45,19 +45,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (user) {
         // Kullanıcı giriş yapmışsa ve login sayfasındaysa
         if (pathname === '/login') {
-          console.log('User is authenticated, redirecting to /socials');
-          router.push('/socials');
+          console.log('User is authenticated, forcing navigation to /socials');
+          window.location.href = '/socials';
         }
       } else {
         // Kullanıcı giriş yapmamışsa ve korumalı bir sayfadaysa
         const protectedRoutes = ['/socials', '/report', '/premium'];
         if (protectedRoutes.some(route => pathname?.startsWith(route))) {
-          console.log('User is not authenticated, redirecting to /login');
-          router.push('/login');
+          console.log('User is not authenticated, forcing navigation to /login');
+          window.location.href = '/login';
         }
       }
     }
-  }, [user, loading, pathname, router]);
+  }, [user, loading, pathname]);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>

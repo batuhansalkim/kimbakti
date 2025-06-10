@@ -50,7 +50,7 @@ export default function LoginPage() {
     });
 
     if (user && !loading) {
-      console.log('User already logged in, redirecting to socials');
+      console.log('User already logged in, forcing navigation to socials');
       window.location.href = '/socials';
     }
   }, [user, loading, isProcessing, error]);

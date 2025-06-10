@@ -35,44 +35,40 @@ export const analytics = typeof window !== 'undefined' && process.env.NODE_ENV =
   ? getAnalytics(app) 
   : null;
 
-let db: Firestore;
+export const auth = getAuth(app);
+export const db = getFirestore(app);
 
-// Client-side Firebase initialization
+// Set persistence to LOCAL
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log('Firebase persistence set to LOCAL');
+  })
+  .catch((error) => {
+    console.error('Error setting persistence:', error);
+  });
+
+// Initialize Firestore persistence
 if (typeof window !== 'undefined') {
-  try {
-    // Configure Auth
-    const auth = getAuth(app);
-    setPersistence(auth, browserLocalPersistence)
-      .catch((error) => console.error('Auth persistence error:', error));
-
-    // Initialize Firestore
-    db = getFirestore(app);
-    
-    // Enable offline persistence
-    enableIndexedDbPersistence(db)
-      .catch((err) => {
-        if (err.code === 'failed-precondition') {
-          console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-        } else if (err.code === 'unimplemented') {
-          console.warn('The current browser does not support persistence.');
-        }
-      });
-
-    // Log initialization in production
-    if (analytics) {
-      logEvent(analytics, 'app_initialized');
-    }
-
-    console.log('Firebase services initialized successfully');
-  } catch (error) {
-    console.error('Firebase initialization error:', error);
-  }
-} else {
-  // Server-side initialization
-  db = getFirestore(app);
+  enableIndexedDbPersistence(db)
+    .then(() => {
+      console.log('Firestore persistence enabled');
+    })
+    .catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Firestore persistence failed - multiple tabs open');
+      } else if (err.code === 'unimplemented') {
+        console.warn('Firestore persistence not available in this browser');
+      }
+    });
 }
 
-const auth = getAuth(app);
+// Log initialization in production
+if (analytics) {
+  logEvent(analytics, 'app_initialized');
+}
+
+console.log('Firebase services initialized successfully');
+
 const googleProvider = new GoogleAuthProvider();
 
 // Firestore bağlantı durumunu kontrol et
