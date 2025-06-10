@@ -226,6 +226,19 @@ export const trackUserActivity = {
   }
 };
 
+export const savePremiumStatus = async (userId: string, isPremium: boolean): Promise<boolean> => {
+  try {
+    await setDoc(doc(db, 'users', userId), {
+      isPremium,
+      premiumUpdatedAt: new Date().toISOString()
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error('Error saving premium status:', error);
+    return false;
+  }
+};
+
 if (process.env.NODE_ENV === 'production') {
   console.log('Firebase initialized in production mode');
 } else {

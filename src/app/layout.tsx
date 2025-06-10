@@ -9,14 +9,35 @@ const inter = Inter({
   display: 'swap',
 });
 
+export const metadata: Metadata = {
+  title: 'Seni Kim Stalklıyor?',
+  description: 'Sosyal medyada seni kim izliyor? Ücretsiz öğren!',
+  icons: {
+    icon: [
+      {
+        url: '/hacker.png',
+        sizes: '32x32',
+        type: 'image/png'
+      },
+      {
+        url: '/hacker.png',
+        sizes: '16x16',
+        type: 'image/png'
+      }
+    ],
+    apple: [
+      {
+        url: '/hacker.png',
+        sizes: '180x180',
+        type: 'image/png'
+      }
+    ]
+  }
+};
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-};
-
-export const metadata: Metadata = {
-  title: 'Seni Kim Stalklıyor?',
-  description: 'Sosyal medya hesaplarını kim takip ediyor? Hemen öğren!',
 };
 
 export default function RootLayout({
@@ -26,6 +47,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr" className="dark" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/hacker.png" type="image/png" sizes="32x32" />
+        <link rel="icon" href="/hacker.png" type="image/png" sizes="16x16" />
+        <link rel="apple-touch-icon" href="/hacker.png" />
+      </head>
       <body 
         className={`${inter.className} min-h-screen bg-gradient-to-b from-gray-900 to-black text-white antialiased`} 
         suppressHydrationWarning

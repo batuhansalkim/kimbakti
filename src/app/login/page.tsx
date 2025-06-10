@@ -1,6 +1,6 @@
 'use client';
 
-import { signInWithGoogle, signInAnonymous, auth, checkRedirectResult } from '@/lib/firebase';
+import { signInWithGoogle, auth, checkRedirectResult } from '@/lib/firebase';
 import { useAuth } from '@/lib/AuthContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -95,37 +95,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleAnonymousSignIn = async () => {
-    if (isProcessing) return;
-
-    try {
-      setError(null);
-      setIsProcessing(true);
-      console.log('Starting anonymous sign in process...');
-      const result = await signInAnonymous();
-      
-      if (result) {
-        console.log('Anonymous sign in successful');
-        // Session cookie'sini ayarla
-        const idToken = await result.getIdToken();
-        document.cookie = `__session=${idToken}; path=/; max-age=3600; secure`;
-        
-        console.log('Redirecting to socials after anonymous sign in');
-        window.location.href = '/socials';
-      }
-    } catch (error: unknown) {
-      console.error('Anonymous sign in error:', error);
-      if (error instanceof Error) {
-        const authError = error as AuthError;
-        setError(authError.message || 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
-      } else {
-        setError('Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
-      }
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
@@ -171,14 +140,6 @@ export default function LoginPage() {
                   />
                 </svg>
                 <span>{isProcessing ? 'Giriş yapılıyor...' : 'Google ile Giriş Yap'}</span>
-              </button>
-
-              <button 
-                onClick={handleAnonymousSignIn}
-                disabled={isProcessing}
-                className="w-full bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isProcessing ? 'Giriş yapılıyor...' : 'Anonim Olarak Devam Et'}
               </button>
             </div>
 
