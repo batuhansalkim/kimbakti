@@ -38,25 +38,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Navigation effect running:', {
       user: user?.email,
       loading,
-      pathname
+      pathname,
+      timestamp: new Date().toISOString()
     });
 
-    if (!loading) {
-      if (user) {
-        // Kullanıcı giriş yapmışsa ve login sayfasındaysa
-        if (pathname === '/login') {
-          console.log('User is authenticated, forcing navigation to /socials');
-          window.location.href = '/socials';
-        }
-      } else {
-        // Kullanıcı giriş yapmamışsa ve korumalı bir sayfadaysa
-        const protectedRoutes = ['/socials', '/report', '/premium'];
-        if (protectedRoutes.some(route => pathname?.startsWith(route))) {
-          console.log('User is not authenticated, forcing navigation to /login');
-          window.location.href = '/login';
+    const handleNavigation = () => {
+      if (!loading) {
+        if (user) {
+          // Kullanıcı giriş yapmışsa ve login sayfasındaysa
+          if (pathname === '/login') {
+            console.log('User is authenticated, navigating to /socials');
+            // Yönlendirme döngüsünü önlemek için timeout kullanıyoruz
+            setTimeout(() => {
+              window.location.replace('/socials');
+            }, 100);
+          }
+        } else {
+          // Kullanıcı giriş yapmamışsa ve korumalı bir sayfadaysa
+          const protectedRoutes = ['/socials', '/report', '/premium'];
+          if (protectedRoutes.some(route => pathname?.startsWith(route))) {
+            console.log('User is not authenticated, navigating to /login');
+            window.location.replace('/login');
+          }
         }
       }
-    }
+    };
+
+    handleNavigation();
   }, [user, loading, pathname]);
 
   return (

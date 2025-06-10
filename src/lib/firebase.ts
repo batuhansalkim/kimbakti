@@ -38,36 +38,45 @@ export const analytics = typeof window !== 'undefined' && process.env.NODE_ENV =
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Set persistence to LOCAL
-setPersistence(auth, browserLocalPersistence)
-  .then(() => {
-    console.log('Firebase persistence set to LOCAL');
-  })
-  .catch((error) => {
-    console.error('Error setting persistence:', error);
-  });
+// Initialize Firebase Auth with persistence
+const initializeAuth = async () => {
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+    console.log('Firebase Auth persistence set to LOCAL');
+  } catch (error) {
+    console.error('Error setting Auth persistence:', error);
+  }
+};
 
-// Initialize Firestore persistence
-if (typeof window !== 'undefined') {
-  enableIndexedDbPersistence(db)
-    .then(() => {
+// Initialize Firestore with persistence
+const initializeFirestore = async () => {
+  if (typeof window !== 'undefined') {
+    try {
+      await enableIndexedDbPersistence(db);
       console.log('Firestore persistence enabled');
-    })
-    .catch((err) => {
+    } catch (err: any) {
       if (err.code === 'failed-precondition') {
         console.warn('Firestore persistence failed - multiple tabs open');
       } else if (err.code === 'unimplemented') {
         console.warn('Firestore persistence not available in this browser');
       }
-    });
-}
+    }
+  }
+};
+
+// Initialize both Auth and Firestore
+Promise.all([initializeAuth(), initializeFirestore()])
+  .then(() => {
+    console.log('Firebase services initialized successfully');
+  })
+  .catch((error) => {
+    console.error('Error initializing Firebase services:', error);
+  });
 
 // Log initialization in production
 if (analytics) {
   logEvent(analytics, 'app_initialized');
 }
-
-console.log('Firebase services initialized successfully');
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -215,4 +224,8 @@ export const trackUserActivity = {
   }
 };
 
-export { auth, db }; 
+if (process.env.NODE_ENV === 'production') {
+  console.log('Firebase initialized in production mode');
+} else {
+  console.log('Firebase initialized in development mode');
+} 

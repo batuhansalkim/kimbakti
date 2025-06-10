@@ -46,14 +46,19 @@ export default function LoginPage() {
       loading,
       currentUser: auth.currentUser?.email,
       isProcessing,
-      error
+      error,
+      timestamp: new Date().toISOString()
     });
 
-    if (user && !loading) {
-      console.log('User already logged in, forcing navigation to socials');
-      window.location.href = '/socials';
+    // Sadece kullanıcı varsa ve yükleme tamamlandıysa yönlendir
+    if (user && !loading && !isProcessing) {
+      console.log('User already logged in, navigating to socials');
+      // Yönlendirme döngüsünü önlemek için timeout kullanıyoruz
+      setTimeout(() => {
+        window.location.replace('/socials');
+      }, 100);
     }
-  }, [user, loading, isProcessing, error]);
+  }, [user, loading, isProcessing]);
 
   const handleGoogleSignIn = async () => {
     if (isProcessing) return;
@@ -70,7 +75,10 @@ export default function LoginPage() {
         console.log('Google sign in successful:', user.email);
         const idToken = await user.getIdToken();
         document.cookie = `__session=${idToken}; path=/; max-age=3600; secure`;
-        window.location.href = '/socials';
+        // Yönlendirme döngüsünü önlemek için timeout kullanıyoruz
+        setTimeout(() => {
+          window.location.replace('/socials');
+        }, 100);
       } else {
         console.log('Redirect flow started, waiting for completion...');
       }
